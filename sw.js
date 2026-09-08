@@ -2,7 +2,7 @@
    Precaches the app shell so the home-screen app opens with no network.
    Serves from cache first, then refreshes the cache in the background,
    so an updated version shows up on the next launch. Bump CACHE on each release. */
-var CACHE = 'taper-v1';
+var CACHE = 'taper-v2';
 var SHELL = [
   './',
   './index.html',

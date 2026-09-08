@@ -4,229 +4,300 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Taper">
-<meta name="theme-color" content="#0a66d6" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0a84ff" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#131315" media="(prefers-color-scheme: dark)">
 <title>Taper</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <style>
+  /* A ration ledger. Parchment and ink by day, graphite and vapor by night.
+     Honey is the ration you have spent; ember is the line you crossed. */
   :root {
     color-scheme: light dark;
-    --bg: #f2f2f7;
-    --card: #ffffff;
-    --text: #111114;
-    --muted: #6e6e73;
-    --accent: #0a66d6;
-    --red: #d9342b;
-    --btn: #e5e5ea;
-    --divider: rgba(0, 0, 0, 0.08);
+    --page: #f4f1ea;
+    --slab: #fbf9f4;
+    --ink: #1b1a17;
+    --ink-2: rgba(27, 26, 23, 0.64);
+    --ink-3: rgba(27, 26, 23, 0.42);
+    --ink-4: rgba(27, 26, 23, 0.22);
+    --rule: rgba(27, 26, 23, 0.10);
+    --track: rgba(27, 26, 23, 0.08);
+    --honey: #c68a17;
+    --honey-ink: #1b1a17;
+    --ember: #cc3c29;
+    --ember-ink: #fff6f2;
+    --face-display: ui-serif, "New York", "Iowan Old Style", Palatino, Georgia, serif;
+    --face-ui: -apple-system, BlinkMacSystemFont, system-ui, "SF Pro Text", "Helvetica Neue", sans-serif;
+    --face-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #000000;
-      --card: #1c1c1e;
-      --text: #f2f2f7;
-      --muted: #8e8e93;
-      --accent: #0a84ff;
-      --red: #c62f28;
-      --btn: #2c2c2e;
-      --divider: rgba(255, 255, 255, 0.1);
+      --page: #131315;
+      --slab: #1c1c1f;
+      --ink: #f2efe8;
+      --ink-2: rgba(242, 239, 232, 0.66);
+      --ink-3: rgba(242, 239, 232, 0.42);
+      --ink-4: rgba(242, 239, 232, 0.22);
+      --rule: rgba(242, 239, 232, 0.09);
+      --track: rgba(242, 239, 232, 0.10);
+      --honey: #e3aa3d;
+      --honey-ink: #17130a;
+      --ember: #ee5b46;
+      --ember-ink: #fff5f2;
     }
   }
 
   * { box-sizing: border-box; }
-  html, body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    -webkit-text-size-adjust: 100%;
-  }
+  html { -webkit-text-size-adjust: 100%; -webkit-font-smoothing: antialiased; }
   body {
+    margin: 0;
+    background: var(--page);
+    color: var(--ink);
+    font: 15px/1.4 var(--face-ui);
     min-height: 100vh;
     min-height: 100dvh;
-    display: flex;
-    flex-direction: column;
   }
-
-  header {
-    position: sticky;
-    top: 0;
-    z-index: 1;
-    background: var(--accent);
-    color: #fff;
-    padding: calc(env(safe-area-inset-top, 0px) + 12px)
-             calc(env(safe-area-inset-right, 0px) + 18px)
-             12px
-             calc(env(safe-area-inset-left, 0px) + 18px);
-  }
-  .hdr-date { font-size: 24px; font-weight: 700; letter-spacing: -0.2px; }
-  .hdr-meta { margin-top: 3px; font-size: 15px; opacity: 0.92; display: flex; flex-wrap: wrap; gap: 0 6px; }
-
   main {
-    flex: 1;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: calc(env(safe-area-inset-top, 0px) + 16px)
+             calc(env(safe-area-inset-right, 0px) + 20px)
+             calc(env(safe-area-inset-bottom, 0px) + 136px)
+             calc(env(safe-area-inset-left, 0px) + 20px);
+  }
+
+  /* ---- Top line: the date as a ledger heading, the strength as a stamp ---- */
+  .top { display: flex; align-items: center; justify-content: space-between; }
+  .date { font: 500 24px/1.1 var(--face-display); letter-spacing: -0.01em; }
+  .stamp {
+    font: 500 12px/1 var(--face-mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    padding: 7px 9px 6px;
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---- The staircase: fifteen weeks stepping down to zero ---- */
+  .stairs { margin-top: 16px; }
+  .stairs svg { display: block; width: 100%; height: 28px; }
+  .step { fill: var(--track); transition: fill 0.2s; }
+  .step.past { fill: var(--ink-4); }
+  .step.now { fill: var(--honey); }
+  .caption {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 7px;
+    font-size: 12px;
+    color: var(--ink-3);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---- The ration ring: one segment per allowed hit, a hand sweeping to the reset ---- */
+  .hour {
+    position: relative;
+    width: min(72vw, 268px);
+    aspect-ratio: 1;
+    margin: 26px auto 0;
+  }
+  .ring { display: block; width: 100%; height: 100%; overflow: visible; }
+  .seg { fill: none; stroke: var(--track); stroke-width: 16; transition: stroke 0.2s; }
+  .seg.used { stroke: var(--honey); }
+  .capped .seg.used { stroke: var(--ember); }
+  .seg.pop { animation: pop 0.24s var(--ease-out); }
+  @keyframes pop { from { stroke-width: 5; opacity: 0.3; } }
+  .seg.track-only { stroke-width: 2; stroke: var(--rule); }
+  .time-track { fill: none; stroke: var(--rule); stroke-width: 2; }
+  .time-arc { fill: none; stroke: var(--ink-3); stroke-width: 2; stroke-linecap: round; }
+  .time-dot { fill: var(--ink); }
+  .center {
+    position: absolute;
+    inset: 0;
     display: flex;
     flex-direction: column;
-    gap: 14px;
-    padding: 14px
-             calc(env(safe-area-inset-right, 0px) + 14px)
-             6px
-             calc(env(safe-area-inset-left, 0px) + 14px);
-  }
-
-  .card {
-    background: var(--card);
-    border-radius: 18px;
-    padding: 16px;
-  }
-  .card h2 {
-    margin: 0 0 12px;
-    font-size: 13px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    color: var(--muted);
-  }
-
-  /* Hour panel */
-  .hour {
+    align-items: center;
+    justify-content: center;
     text-align: center;
-    transition: background-color 0.2s, color 0.2s;
+    pointer-events: none;
   }
-  .hour-count {
-    font-size: 64px;
-    font-weight: 700;
-    line-height: 1;
+  .count {
+    font: 500 78px/1 var(--face-display);
+    letter-spacing: -0.03em;
     font-variant-numeric: tabular-nums;
-    letter-spacing: -1px;
+    transition: color 0.2s;
   }
-  .hour-cap { font-size: 30px; font-weight: 600; opacity: 0.6; }
-  .hour-label { margin-top: 8px; font-size: 16px; color: var(--muted); }
-  .hour.over { background: var(--red); color: #fff; }
-  .hour.over .hour-cap { opacity: 0.85; }
-  .hour.over .hour-label { color: #fff; font-weight: 700; }
+  .capped .count { color: var(--ember); }
+  .sub { margin-top: 5px; font-size: 15px; font-weight: 500; color: var(--ink-2); transition: color 0.2s; }
+  .capped .sub { color: var(--ember); }
+  .reset { margin-top: 7px; font: 12px/1 var(--face-mono); letter-spacing: 0.02em; color: var(--ink-3); }
 
+  /* ---- Ledger rows ---- */
+  .section { margin-top: 32px; }
+  .row-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .figures {
+    font: 500 13px/1 var(--face-ui);
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--ink-2);
+    font-variant-numeric: tabular-nums;
+  }
+  .figures b { font-weight: 600; color: var(--ink); }
+  .figures .bad { font-weight: 600; color: var(--ember); }
+
+  /* 24 cells, one per clock hour */
+  .strip { display: grid; grid-template-columns: repeat(24, 1fr); gap: 2px; height: 10px; }
+  .strip.big { height: 16px; margin-top: 12px; }
+  .strip i { display: block; border-radius: 2px; background: var(--track); }
+  .strip i.under { background: var(--honey); opacity: var(--f); }
+  .strip i.cap { background: var(--honey); }
+  .strip i.over { background: var(--ember); }
+  .strip i.plain { background: var(--ink-3); opacity: var(--f); }
+  .strip i.future { opacity: 0.35; }
+  .strip i.now { box-shadow: inset 0 0 0 1.5px var(--ink); }
+
+  .days { list-style: none; margin: 8px 0 0; padding: 0; }
+  .days li {
+    display: grid;
+    grid-template-columns: 50px 1fr 40px 36px;
+    align-items: center;
+    gap: 12px;
+    height: 36px;
+    border-top: 1px solid var(--rule);
+  }
+  .days li:first-child { border-top: 0; }
+  .dow { font-size: 13px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+  .n { text-align: right; font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .over { text-align: right; font-size: 12px; color: var(--ink-4); font-variant-numeric: tabular-nums; }
+  .over.bad { color: var(--ember); font-weight: 600; }
+
+  .tools { display: flex; justify-content: center; gap: 4px; margin-top: 28px; }
   .btn {
     appearance: none;
     -webkit-appearance: none;
     border: 0;
     margin: 0;
     font: inherit;
-    border-radius: 16px;
     cursor: pointer;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
     -webkit-user-select: none;
     user-select: none;
-    transition: transform 0.08s, filter 0.08s;
   }
-  .btn:active { transform: scale(0.985); filter: brightness(0.92); }
-  .btn:disabled { opacity: 0.4; cursor: default; transform: none; filter: none; }
-
-  .btn-plus {
-    width: 100%;
-    min-height: 88px;
-    margin-top: 18px;
-    font-size: 40px;
-    font-weight: 700;
-    background: var(--accent);
-    color: #fff;
-  }
-  .hour.over .btn-plus { background: rgba(255, 255, 255, 0.24); }
-  .btn-undo {
-    width: 100%;
-    min-height: 48px;
-    margin-top: 10px;
-    font-size: 17px;
-    font-weight: 600;
-    background: var(--btn);
-    color: var(--text);
-  }
-  .hour.over .btn-undo { background: rgba(0, 0, 0, 0.2); color: #fff; }
-
-  /* Today panel */
-  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  .stat { text-align: center; }
-  .stat-v { font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; }
-  .stat-l { margin-top: 4px; font-size: 13px; color: var(--muted); }
-
-  /* History */
-  .history { margin: 0; padding: 0; list-style: none; }
-  .history li {
-    display: flex;
-    align-items: center;
+  .ghost {
     min-height: 44px;
-    padding: 6px 0;
-    border-top: 1px solid var(--divider);
-    font-size: 16px;
-    font-variant-numeric: tabular-nums;
+    padding: 0 16px;
+    background: none;
+    border-radius: 8px;
+    font: 500 13px/1 var(--face-ui);
+    color: var(--ink-3);
+    transition: color 0.12s;
   }
-  .history li:first-child { border-top: 0; }
-  .h-day { flex: 1; }
-  .h-hits { width: 78px; text-align: right; font-weight: 600; }
-  .h-over { width: 78px; text-align: right; color: var(--muted); }
-  .h-over.bad { color: var(--red); font-weight: 600; }
+  .ghost:active { color: var(--ink); }
+  .ghost.danger:active { color: var(--ember); }
 
-  footer {
-    display: flex;
-    gap: 12px;
-    padding: 8px
-             calc(env(safe-area-inset-right, 0px) + 14px)
-             calc(env(safe-area-inset-bottom, 0px) + 14px)
-             calc(env(safe-area-inset-left, 0px) + 14px);
+  /* ---- The thumb bar: always under the thumb, never behind the scroll ---- */
+  .thumb {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2;
+    padding: 18px calc(env(safe-area-inset-right, 0px) + 16px)
+             calc(env(safe-area-inset-bottom, 0px) + 12px)
+             calc(env(safe-area-inset-left, 0px) + 16px);
+    background: linear-gradient(to top, var(--page) 72%, transparent);
   }
-  .btn-foot {
+  .thumb-inner { display: flex; gap: 10px; max-width: 448px; margin: 0 auto; }
+  .plus {
+    flex: 3;
+    min-height: 88px;
+    border-radius: 18px;
+    background: var(--honey);
+    color: var(--honey-ink);
+    font: 500 44px/1 var(--face-display);
+    letter-spacing: -0.02em;
+    transition: transform 0.12s var(--ease-out), background-color 0.2s, color 0.2s;
+  }
+  .plus:active { transform: scale(0.97); }
+  .capped .plus { background: var(--ember); color: var(--ember-ink); }
+  .undo {
     flex: 1;
-    min-height: 48px;
-    font-size: 17px;
-    font-weight: 600;
-    background: var(--card);
-    color: var(--accent);
+    min-height: 88px;
+    border-radius: 18px;
+    background: var(--slab);
+    box-shadow: inset 0 0 0 1px var(--rule);
+    color: var(--ink-2);
+    font: 600 15px/1 var(--face-ui);
+    transition: transform 0.12s var(--ease-out), opacity 0.2s;
   }
-  .btn-foot.danger { color: var(--red); }
+  .undo:active { transform: scale(0.97); }
+  .undo:disabled { opacity: 0.35; transform: none; cursor: default; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .seg.pop { animation: none; }
+    .plus, .undo, .seg, .count, .sub, .step { transition: none; }
+  }
 </style>
 </head>
 <body>
 
-<header>
-  <div class="hdr-date" id="hdrDate">—</div>
-  <div class="hdr-meta">
-    <span id="hdrStrength">—</span><span aria-hidden="true">·</span>
-    <span id="hdrWeek">—</span><span aria-hidden="true">·</span>
-    <span id="hdrDays">—</span>
-  </div>
-</header>
-
 <main>
-  <section class="card hour" id="hourPanel" aria-live="polite">
-    <div class="hour-count"><span id="hourCount">0</span><span class="hour-cap" id="hourCap"></span></div>
-    <div class="hour-label" id="hourLabel">this hour</div>
-    <button class="btn btn-plus" id="btnPlus" type="button" aria-label="Log one hit">+1</button>
-    <button class="btn btn-undo" id="btnUndo" type="button">Undo</button>
+  <header class="top">
+    <div class="date" id="date">—</div>
+    <div class="stamp" id="stamp">—</div>
+  </header>
+
+  <section class="stairs" aria-label="Taper schedule">
+    <svg id="stairs" viewBox="0 0 300 28" preserveAspectRatio="none" aria-hidden="true"></svg>
+    <div class="caption"><span id="week">—</span><span id="daysLeft">—</span></div>
   </section>
 
-  <section class="card">
-    <h2>Today</h2>
-    <div class="stats">
-      <div class="stat"><div class="stat-v" id="todayTotal">0</div><div class="stat-l">hits</div></div>
-      <div class="stat"><div class="stat-v" id="todayPods">0.0</div><div class="stat-l">pods</div></div>
-      <div class="stat"><div class="stat-v" id="todayOver">0</div><div class="stat-l">hours over cap</div></div>
+  <section class="hour" id="hour" aria-live="polite">
+    <svg class="ring" id="ring" viewBox="0 0 240 240" aria-hidden="true"></svg>
+    <div class="center">
+      <div class="count" id="count">0</div>
+      <div class="sub" id="sub">this hour</div>
+      <div class="reset" id="reset"></div>
     </div>
   </section>
 
-  <section class="card">
-    <h2>Last 7 days</h2>
-    <ul class="history" id="history"></ul>
+  <section class="section">
+    <div class="row-head"><span>Today</span><span class="figures" id="figures"></span></div>
+    <div class="strip big" id="todayStrip" aria-label="Hits by hour today"></div>
+  </section>
+
+  <section class="section">
+    <div class="row-head"><span>Last 7 days</span><span class="figures">hits · hours over</span></div>
+    <ol class="days" id="history"></ol>
+  </section>
+
+  <section class="tools">
+    <button class="btn ghost" id="btnExport" type="button">Export</button>
+    <button class="btn ghost danger" id="btnReset" type="button">Reset</button>
   </section>
 </main>
 
-<footer>
-  <button class="btn btn-foot" id="btnExport" type="button">Export</button>
-  <button class="btn btn-foot danger" id="btnReset" type="button">Reset</button>
-</footer>
+<div class="thumb">
+  <div class="thumb-inner">
+    <button class="btn plus" id="btnPlus" type="button" aria-label="Log one hit">+1</button>
+    <button class="btn undo" id="btnUndo" type="button">Undo</button>
+  </div>
+</div>
 
 <script>
 (function () {
@@ -256,6 +327,7 @@
   var STORAGE_KEY = 'taper.hits';
   var HITS_PER_POD = 200;
   var MS_PER_DAY = 86400000;
+  var SVG_NS = 'http://www.w3.org/2000/svg';
 
   // ---- Date helpers (all in the device's local time) ----
   function pad(n) { return (n < 10 ? '0' : '') + n; }
@@ -270,6 +342,9 @@
   function fmtDate(d) {
     return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
   }
+  function fmtDow(d) {
+    return d.toLocaleDateString(undefined, { weekday: 'short' }) + ' ' + d.getDate();
+  }
 
   // ---- Schedule ----
   function phaseFor(date) {
@@ -278,10 +353,10 @@
     for (var i = 0; i < SCHEDULE.length; i++) {
       if (parseLocalDate(SCHEDULE[i].start).getTime() <= t) idx = i;
     }
-    if (idx < 0) return { baseline: true, quit: false, strength: null, cap: null, week: null };
+    if (idx < 0) return { baseline: true, quit: false, strength: null, cap: null, week: null, index: -1 };
     var e = SCHEDULE[idx];
     var quit = e.strength === 'quit';
-    return { baseline: false, quit: quit, strength: e.strength, cap: e.hourlyCap, week: quit ? null : idx + 1 };
+    return { baseline: false, quit: quit, strength: e.strength, cap: e.hourlyCap, week: quit ? null : idx + 1, index: idx };
   }
 
   // ---- Storage ----
@@ -333,70 +408,175 @@
   // ---- DOM ----
   var $ = function (id) { return document.getElementById(id); };
   var el = {
-    hdrDate: $('hdrDate'), hdrStrength: $('hdrStrength'), hdrWeek: $('hdrWeek'), hdrDays: $('hdrDays'),
-    hourPanel: $('hourPanel'), hourCount: $('hourCount'), hourCap: $('hourCap'), hourLabel: $('hourLabel'),
-    btnPlus: $('btnPlus'), btnUndo: $('btnUndo'),
-    todayTotal: $('todayTotal'), todayPods: $('todayPods'), todayOver: $('todayOver'),
-    history: $('history'), btnExport: $('btnExport'), btnReset: $('btnReset')
+    date: $('date'), stamp: $('stamp'), stairs: $('stairs'), week: $('week'), daysLeft: $('daysLeft'),
+    hour: $('hour'), ring: $('ring'), count: $('count'), sub: $('sub'), reset: $('reset'),
+    figures: $('figures'), todayStrip: $('todayStrip'), history: $('history'),
+    btnPlus: $('btnPlus'), btnUndo: $('btnUndo'), btnExport: $('btnExport'), btnReset: $('btnReset')
   };
+
+  function svg(tag, attrs) {
+    var n = document.createElementNS(SVG_NS, tag);
+    for (var k in attrs) n.setAttribute(k, attrs[k]);
+    return n;
+  }
+
+  // ---- Staircase: one bar per week, height = that week's cap ----
+  var stairBars = [];
+  (function buildStairs() {
+    var weeks = SCHEDULE.filter(function (e) { return e.strength !== 'quit'; });
+    var maxCap = weeks[0].hourlyCap;
+    var W = 300, H = 28, gap = 4;
+    var bw = (W - gap * (weeks.length - 1)) / weeks.length;
+    for (var i = 0; i < weeks.length; i++) {
+      var h = Math.max(2, Math.round(H * weeks[i].hourlyCap / maxCap));
+      var r = svg('rect', { x: i * (bw + gap), y: H - h, width: bw, height: h, rx: 1.5, 'class': 'step' });
+      el.stairs.appendChild(r);
+      stairBars.push(r);
+    }
+  })();
+
+  // ---- Ring geometry: 0° is 12 o'clock, clockwise ----
+  var CX = 120, CY = 120, R_SEG = 94, R_TIME = 114;
+  function polar(r, deg) {
+    var rad = (deg - 90) * Math.PI / 180;
+    return { x: CX + r * Math.cos(rad), y: CY + r * Math.sin(rad) };
+  }
+  function arcPath(r, a0, a1) {
+    var s = polar(r, a0), e = polar(r, a1);
+    var large = (a1 - a0) > 180 ? 1 : 0;
+    return 'M ' + s.x.toFixed(2) + ' ' + s.y.toFixed(2) + ' A ' + r + ' ' + r + ' 0 ' + large + ' 1 ' + e.x.toFixed(2) + ' ' + e.y.toFixed(2);
+  }
+
+  var ring = { cap: undefined, segs: [], timeArc: null, timeDot: null };
+  function buildRing(cap) {
+    el.ring.textContent = '';
+    ring.segs = [];
+    ring.cap = cap;
+    el.ring.appendChild(svg('circle', { cx: CX, cy: CY, r: R_TIME, 'class': 'time-track' }));
+    if (cap === null || cap === 0) {
+      el.ring.appendChild(svg('circle', { cx: CX, cy: CY, r: R_SEG, 'class': 'seg track-only' }));
+    } else {
+      var span = 360 / cap;
+      var gap = cap === 1 ? 5 : Math.min(6, span * 0.2);
+      for (var i = 0; i < cap; i++) {
+        var a0 = i * span + gap / 2, a1 = (i + 1) * span - gap / 2;
+        var p = svg('path', { d: arcPath(R_SEG, a0, a1), 'class': 'seg' });
+        el.ring.appendChild(p);
+        ring.segs.push(p);
+      }
+    }
+    ring.timeArc = svg('path', { d: '', 'class': 'time-arc' });
+    ring.timeDot = svg('circle', { cx: CX, cy: CY - R_TIME, r: 3.5, 'class': 'time-dot' });
+    el.ring.appendChild(ring.timeArc);
+    el.ring.appendChild(ring.timeDot);
+  }
+
+  var lastHourKey = null, lastCount = 0;
 
   function render() {
     var now = new Date();
     var phase = phaseFor(now);
     var buckets = bucketHits(hits);
     var today = dayStats(buckets, now);
+    var cap = phase.cap;
+    var hourCount = today.perHour ? today.perHour[now.getHours()] : 0;
 
-    // Header
-    el.hdrDate.textContent = fmtDate(now);
-    el.hdrStrength.textContent = phase.baseline ? '—' : (phase.quit ? 'Quit' : phase.strength);
-    el.hdrWeek.textContent = phase.baseline ? 'Baseline week'
-      : (phase.quit ? 'Quit' : 'Week ' + phase.week + ' of ' + TOTAL_WEEKS);
+    // Top line
+    el.date.textContent = fmtDate(now);
+    el.stamp.textContent = phase.baseline ? 'Baseline' : (phase.quit ? 'Quit' : phase.strength);
+
+    // Staircase + caption
+    for (var i = 0; i < stairBars.length; i++) {
+      var cls = 'step';
+      if (phase.quit || (phase.week !== null && i < phase.week - 1)) cls += ' past';
+      else if (phase.week !== null && i === phase.week - 1) cls += ' now';
+      stairBars[i].setAttribute('class', cls);
+    }
+    el.week.textContent = phase.baseline ? 'Baseline week' : (phase.quit ? 'Quit' : 'Week ' + phase.week + ' of ' + TOTAL_WEEKS);
     var daysLeft = daysBetween(now, parseLocalDate(QUIT_DATE));
-    el.hdrDays.textContent = daysLeft > 0 ? daysLeft + (daysLeft === 1 ? ' day to quit' : ' days to quit')
+    el.daysLeft.textContent = daysLeft > 0 ? daysLeft + (daysLeft === 1 ? ' day to quit' : ' days to quit')
       : (daysLeft === 0 ? 'Quit day' : (-daysLeft) + (daysLeft === -1 ? ' day since quit' : ' days since quit'));
 
-    // Hour panel
-    var hourCount = today.perHour ? today.perHour[now.getHours()] : 0;
-    el.hourCount.textContent = String(hourCount);
-    if (phase.cap === null) {
-      el.hourCap.textContent = '';
-      el.hourLabel.textContent = 'this hour · no cap';
-      el.hourPanel.classList.remove('over');
-    } else {
-      el.hourCap.textContent = ' / ' + phase.cap;
-      var capReached = hourCount >= phase.cap;
-      el.hourLabel.textContent = capReached ? 'Cap reached' : 'this hour';
-      el.hourPanel.classList.toggle('over', capReached);
+    // Ring
+    if (ring.cap !== cap) buildRing(cap);
+    var hourKey = dayKey(now) + '-' + now.getHours();
+    var popIndex = (hourKey === lastHourKey && hourCount === lastCount + 1) ? hourCount - 1 : -1;
+    for (var s = 0; s < ring.segs.length; s++) {
+      ring.segs[s].setAttribute('class', 'seg' + (s < hourCount ? ' used' : '') + (s === popIndex ? ' pop' : ''));
     }
-    el.btnUndo.disabled = hits.length === 0;
+    lastHourKey = hourKey;
+    lastCount = hourCount;
+    var frac = (now.getMinutes() * 60 + now.getSeconds()) / 3600;
+    var deg = frac * 360;
+    ring.timeArc.setAttribute('d', deg > 0.5 ? arcPath(R_TIME, 0, deg) : '');
+    var dot = polar(R_TIME, deg);
+    ring.timeDot.setAttribute('cx', dot.x.toFixed(2));
+    ring.timeDot.setAttribute('cy', dot.y.toFixed(2));
 
-    // Today panel
-    el.todayTotal.textContent = String(today.total);
-    el.todayPods.textContent = (today.total / HITS_PER_POD).toFixed(1);
-    el.todayOver.textContent = today.cap === null ? '—' : String(today.over);
+    el.count.textContent = String(hourCount);
+    var capped = cap !== null && hourCount >= cap;
+    if (cap === null) el.sub.textContent = 'this hour · no cap';
+    else if (phase.quit) el.sub.textContent = hourCount === 0 ? 'Quit · none allowed' : 'over by ' + hourCount;
+    else if (hourCount < cap) el.sub.textContent = (cap - hourCount) + ' left of ' + cap;
+    else if (hourCount === cap) el.sub.textContent = 'Cap reached';
+    else el.sub.textContent = 'over by ' + (hourCount - cap) + ' · cap ' + cap;
+    var minsLeft = Math.max(1, Math.ceil((3600 - (now.getMinutes() * 60 + now.getSeconds())) / 60));
+    el.reset.textContent = 'resets in ' + minsLeft + ' min';
+    document.body.classList.toggle('capped', capped);
+
+    // Today
+    var overText = today.cap === null ? '' : ' · ' + (today.over > 0 ? '<span class="bad">' + today.over + ' h over</span>' : '0 h over');
+    el.figures.innerHTML = '<b>' + today.total + '</b> hits · ' + (today.total / HITS_PER_POD).toFixed(1) + ' pods' + overText;
+    fillStrip(el.todayStrip, today, now.getHours());
 
     // History: the 7 days before today
     var frag = document.createDocumentFragment();
-    for (var i = 1; i <= 7; i++) {
-      var day = addDays(now, -i);
-      var s = dayStats(buckets, day);
+    for (var d = 1; d <= 7; d++) {
+      var day = addDays(now, -d);
+      var st = dayStats(buckets, day);
       var li = document.createElement('li');
-      var dayEl = document.createElement('span');
-      dayEl.className = 'h-day';
-      dayEl.textContent = i === 1 ? 'Yesterday' : fmtDate(day);
-      var hitsEl = document.createElement('span');
-      hitsEl.className = 'h-hits';
-      hitsEl.textContent = s.total + (s.total === 1 ? ' hit' : ' hits');
-      var overEl = document.createElement('span');
-      overEl.className = 'h-over' + (s.over > 0 ? ' bad' : '');
-      overEl.textContent = s.cap === null ? '—' : s.over + ' over';
-      li.appendChild(dayEl);
-      li.appendChild(hitsEl);
-      li.appendChild(overEl);
+      var dow = document.createElement('span');
+      dow.className = 'dow';
+      dow.textContent = fmtDow(day);
+      var strip = document.createElement('div');
+      strip.className = 'strip';
+      fillStrip(strip, st, -1);
+      var n = document.createElement('span');
+      n.className = 'n';
+      n.textContent = String(st.total);
+      var over = document.createElement('span');
+      over.className = 'over' + (st.over > 0 ? ' bad' : '');
+      over.textContent = st.cap === null ? '—' : String(st.over);
+      li.appendChild(dow); li.appendChild(strip); li.appendChild(n); li.appendChild(over);
       frag.appendChild(li);
     }
     el.history.textContent = '';
     el.history.appendChild(frag);
+
+    el.btnUndo.disabled = hits.length === 0;
+  }
+
+  // One cell per clock hour; tone by how the hour went against its cap.
+  function fillStrip(container, stats, nowHour) {
+    var per = stats.perHour, cap = stats.cap;
+    var max = 1;
+    if (per && cap === null) for (var m = 0; m < 24; m++) if (per[m] > max) max = per[m];
+    container.textContent = '';
+    for (var h = 0; h < 24; h++) {
+      var cell = document.createElement('i');
+      var n = per ? per[h] : 0;
+      var cls = '';
+      if (n > 0) {
+        if (cap === null) { cls = 'plain'; cell.style.setProperty('--f', (0.3 + 0.7 * n / max).toFixed(2)); }
+        else if (cap === 0 || n > cap) cls = 'over';
+        else if (n === cap) cls = 'cap';
+        else { cls = 'under'; cell.style.setProperty('--f', (0.3 + 0.65 * n / cap).toFixed(2)); }
+      }
+      if (nowHour >= 0 && h > nowHour) cls += ' future';
+      if (h === nowHour) cls += ' now';
+      if (cls) cell.className = cls.trim();
+      container.appendChild(cell);
+    }
   }
 
   // ---- Actions ----
@@ -485,7 +665,7 @@
   document.addEventListener('visibilitychange', function () { if (!document.hidden) wake(); });
   window.addEventListener('pageshow', wake);
   window.addEventListener('focus', wake);
-  setInterval(render, 30000);
+  setInterval(render, 20000);
 
   render();
   scheduleHourTick();
