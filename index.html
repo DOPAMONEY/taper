@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Taper">
 <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)">
@@ -20,14 +21,15 @@
     --page: #f4f1ea;
     --slab: #fbf9f4;
     --ink: #1b1a17;
-    --ink-2: rgba(27, 26, 23, 0.64);
-    --ink-3: rgba(27, 26, 23, 0.42);
-    --ink-4: rgba(27, 26, 23, 0.22);
+    --ink-2: rgba(27, 26, 23, 0.74);
+    --ink-3: rgba(27, 26, 23, 0.62);
+    /* --ink-4 is for non-text only (past steps, tracks) */
+    --ink-4: rgba(27, 26, 23, 0.34);
     --rule: rgba(27, 26, 23, 0.10);
     --track: rgba(27, 26, 23, 0.08);
-    --honey: #c68a17;
+    --honey: #b77d0f;
     --honey-ink: #1b1a17;
-    --ember: #cc3c29;
+    --ember: #c4372a;
     --ember-ink: #fff6f2;
     --face-display: ui-serif, "New York", "Iowan Old Style", Palatino, Georgia, serif;
     --face-ui: -apple-system, BlinkMacSystemFont, system-ui, "SF Pro Text", "Helvetica Neue", sans-serif;
@@ -39,9 +41,9 @@
       --page: #131315;
       --slab: #1c1c1f;
       --ink: #f2efe8;
-      --ink-2: rgba(242, 239, 232, 0.66);
-      --ink-3: rgba(242, 239, 232, 0.42);
-      --ink-4: rgba(242, 239, 232, 0.22);
+      --ink-2: rgba(242, 239, 232, 0.76);
+      --ink-3: rgba(242, 239, 232, 0.55);
+      --ink-4: rgba(242, 239, 232, 0.30);
       --rule: rgba(242, 239, 232, 0.09);
       --track: rgba(242, 239, 232, 0.10);
       --honey: #e3aa3d;
@@ -52,12 +54,22 @@
   }
 
   * { box-sizing: border-box; }
-  html { -webkit-text-size-adjust: 100%; -webkit-font-smoothing: antialiased; }
+  [hidden] { display: none !important; }
+
+  /* 106.25% == 17px. Safari then replaces it with the user's Dynamic Type body
+     size; browsers that do not know -apple-system-body ignore the second
+     declaration and stay at 17px. Every font size below is rem off that base. */
+  html {
+    font-size: 106.25%;
+    font: -apple-system-body;
+    -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+  }
   body {
     margin: 0;
     background: var(--page);
     color: var(--ink);
-    font: 15px/1.4 var(--face-ui);
+    font: 0.882rem/1.4 var(--face-ui);
     min-height: 100vh;
     min-height: 100dvh;
   }
@@ -70,17 +82,29 @@
              calc(env(safe-area-inset-left, 0px) + 20px);
   }
 
+  /* Visible to screen readers only */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
   /* ---- Top line: the date as a ledger heading, the strength as a stamp ---- */
   .top { display: flex; align-items: center; justify-content: space-between; }
-  .date { font: 500 24px/1.1 var(--face-display); letter-spacing: -0.01em; }
+  .date { margin: 0; font: 500 1.412rem/1.1 var(--face-display); letter-spacing: -0.01em; }
   .stamp {
-    font: 500 12px/1 var(--face-mono);
+    font: 500 0.706rem/1 var(--face-mono);
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--ink-2);
-    padding: 7px 9px 6px;
-    border: 1px solid var(--rule);
-    border-radius: 6px;
+    padding: 7px 0 6px;
     font-variant-numeric: tabular-nums;
   }
 
@@ -94,7 +118,7 @@
     display: flex;
     justify-content: space-between;
     margin-top: 7px;
-    font-size: 12px;
+    font-size: 0.706rem;
     color: var(--ink-3);
     font-variant-numeric: tabular-nums;
   }
@@ -127,15 +151,18 @@
     pointer-events: none;
   }
   .count {
-    font: 500 78px/1 var(--face-display);
+    font-family: var(--face-display);
+    font-weight: 500;
+    line-height: 1;
+    font-size: clamp(56px, 4.6rem, 92px);
     letter-spacing: -0.03em;
     font-variant-numeric: tabular-nums;
     transition: color 0.2s;
   }
   .capped .count { color: var(--ember); }
-  .sub { margin-top: 5px; font-size: 15px; font-weight: 500; color: var(--ink-2); transition: color 0.2s; }
+  .sub { margin-top: 5px; font-size: 0.882rem; font-weight: 500; color: var(--ink-2); transition: color 0.2s; }
   .capped .sub { color: var(--ember); }
-  .reset { margin-top: 7px; font: 12px/1 var(--face-mono); letter-spacing: 0.02em; color: var(--ink-3); }
+  .reset { margin-top: 7px; font: 0.706rem/1 var(--face-mono); letter-spacing: 0.02em; color: var(--ink-3); }
 
   /* ---- Ledger rows ---- */
   .section { margin-top: 32px; }
@@ -143,14 +170,15 @@
     display: flex;
     justify-content: space-between;
     align-items: baseline;
-    font-size: 11px;
+    margin: 0;
+    font-size: 0.647rem;
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--ink-3);
   }
   .figures {
-    font: 500 13px/1 var(--face-ui);
+    font: 500 0.765rem/1 var(--face-ui);
     letter-spacing: 0;
     text-transform: none;
     color: var(--ink-2);
@@ -158,14 +186,21 @@
   }
   .figures b { font-weight: 600; color: var(--ink); }
   .figures .bad { font-weight: 600; color: var(--ember); }
+  .foot { margin: 8px 0 0; font-size: 0.706rem; color: var(--ink-3); }
 
   /* 24 cells, one per clock hour */
-  .strip { display: grid; grid-template-columns: repeat(24, 1fr); gap: 2px; height: 10px; }
+  .strip { display: grid; grid-template-columns: repeat(24, 1fr); gap: 2px; height: 10px; overflow: visible; }
   .strip.big { height: 16px; margin-top: 12px; }
   .strip i { display: block; border-radius: 2px; background: var(--track); }
   .strip i.under { background: var(--honey); opacity: var(--f); }
   .strip i.cap { background: var(--honey); }
-  .strip i.over { background: var(--ember); }
+  /* Over-cap hours get a shape cue as well as ember, so colour is never the only signal */
+  .strip i.over {
+    background: var(--ember);
+    transform: scaleY(1.45);
+    transform-origin: bottom;
+    border-radius: 2px 2px 1px 1px;
+  }
   .strip i.plain { background: var(--ink-3); opacity: var(--f); }
   .strip i.future { opacity: 0.35; }
   .strip i.now { box-shadow: inset 0 0 0 1.5px var(--ink); }
@@ -180,12 +215,15 @@
     border-top: 1px solid var(--rule);
   }
   .days li:first-child { border-top: 0; }
-  .dow { font-size: 13px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
-  .n { text-align: right; font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
-  .over { text-align: right; font-size: 12px; color: var(--ink-4); font-variant-numeric: tabular-nums; }
+  /* headroom so a taller over-cap cell is never clipped by the row above */
+  .days li .strip { margin-top: 6px; }
+  .dow { font-size: 0.765rem; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+  .n { text-align: right; font-size: 0.824rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .days li.baseline .n { color: var(--ink-2); font-weight: 500; }
+  .over { text-align: right; font-size: 0.706rem; color: var(--ink-3); font-variant-numeric: tabular-nums; }
   .over.bad { color: var(--ember); font-weight: 600; }
 
-  .tools { display: flex; justify-content: center; gap: 4px; margin-top: 28px; }
+  .tools { display: flex; justify-content: center; gap: 16px; margin-top: 28px; }
   .btn {
     appearance: none;
     -webkit-appearance: none;
@@ -195,15 +233,17 @@
     cursor: pointer;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
     -webkit-user-select: none;
     user-select: none;
   }
+  .btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
   .ghost {
     min-height: 44px;
     padding: 0 16px;
     background: none;
     border-radius: 8px;
-    font: 500 13px/1 var(--face-ui);
+    font: 500 0.765rem/1 var(--face-ui);
     color: var(--ink-3);
     transition: color 0.12s;
   }
@@ -220,8 +260,54 @@
     padding: 18px calc(env(safe-area-inset-right, 0px) + 16px)
              calc(env(safe-area-inset-bottom, 0px) + 12px)
              calc(env(safe-area-inset-left, 0px) + 16px);
-    background: linear-gradient(to top, var(--page) 72%, transparent);
+    /* fade anchored to a fixed 24px so the bar stays opaque behind #note and
+       #backdate however tall they make it */
+    background: linear-gradient(to top, var(--page) calc(100% - 24px), transparent);
   }
+  .note {
+    text-align: center;
+    font-size: 0.765rem;
+    font-weight: 500;
+    color: var(--ink-2);
+    min-height: 20px;
+    margin: 0 auto 8px;
+    max-width: 448px;
+  }
+  .note.warn { color: var(--ember); }
+  .note.action {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .backdate {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 0 auto 10px;
+    max-width: 448px;
+  }
+  .backdate-label {
+    font-size: 0.765rem;
+    color: var(--ink-2);
+    width: 100%;
+    text-align: center;
+  }
+  .chip {
+    min-height: 44px;
+    padding: 0 14px;
+    border-radius: 12px;
+    background: var(--slab);
+    box-shadow: inset 0 0 0 1px var(--rule);
+    color: var(--ink);
+    font: 500 0.882rem var(--face-ui);
+  }
+  .chip:active { transform: scale(0.97); }
   .thumb-inner { display: flex; gap: 10px; max-width: 448px; margin: 0 auto; }
   .plus {
     flex: 3;
@@ -229,7 +315,7 @@
     border-radius: 18px;
     background: var(--honey);
     color: var(--honey-ink);
-    font: 500 44px/1 var(--face-display);
+    font: 500 2.588rem/1 var(--face-display);
     letter-spacing: -0.02em;
     transition: transform 0.12s var(--ease-out), background-color 0.2s, color 0.2s;
   }
@@ -242,11 +328,28 @@
     background: var(--slab);
     box-shadow: inset 0 0 0 1px var(--rule);
     color: var(--ink-2);
-    font: 600 15px/1 var(--face-ui);
+    font: 600 0.882rem/1 var(--face-ui);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     transition: transform 0.12s var(--ease-out), opacity 0.2s;
   }
   .undo:active { transform: scale(0.97); }
   .undo:disabled { opacity: 0.35; transform: none; cursor: default; }
+  .undo-time {
+    display: block;
+    margin-top: 4px;
+    font: 0.706rem/1 var(--face-mono);
+    color: var(--ink-3);
+  }
+
+  /* ---- Short screens: keep the ring, the count and the thumb bar all visible ---- */
+  @media (max-height: 700px) {
+    .hour { width: min(60vw, 224px); margin-top: 18px; }
+    .count { font-size: clamp(48px, 3.8rem, 64px); }
+    .section { margin-top: 24px; }
+  }
 
   @media (prefers-reduced-motion: reduce) {
     .seg.pop { animation: none; }
@@ -258,16 +361,16 @@
 
 <main>
   <header class="top">
-    <div class="date" id="date">—</div>
+    <h1 class="date" id="date">—</h1>
     <div class="stamp" id="stamp">—</div>
   </header>
 
   <section class="stairs" aria-label="Taper schedule">
-    <svg id="stairs" viewBox="0 0 300 28" preserveAspectRatio="none" aria-hidden="true"></svg>
+    <svg id="stairs" viewBox="0 0 300 28" preserveAspectRatio="none" role="img" aria-label="Hourly cap by week"></svg>
     <div class="caption"><span id="week">—</span><span id="daysLeft">—</span></div>
   </section>
 
-  <section class="hour" id="hour" aria-live="polite">
+  <section class="hour" id="hour">
     <svg class="ring" id="ring" viewBox="0 0 240 240" aria-hidden="true"></svg>
     <div class="center">
       <div class="count" id="count">0</div>
@@ -276,28 +379,40 @@
     </div>
   </section>
 
+  <p class="sr-only" id="live" aria-live="polite"></p>
+
+  <div class="thumb" role="group" aria-label="Log hits">
+    <div class="note" id="note" hidden></div>
+    <div class="backdate" id="backdate" hidden>
+      <span class="backdate-label">Log a hit from</span>
+      <button class="btn chip" type="button" data-min="5">5 min ago</button>
+      <button class="btn chip" type="button" data-min="15">15 min ago</button>
+      <button class="btn chip" type="button" data-min="30">30 min ago</button>
+      <button class="btn chip" type="button" data-cancel>Cancel</button>
+    </div>
+    <div class="thumb-inner">
+      <button class="btn plus" id="btnPlus" type="button" aria-label="Log one hit">+1</button>
+      <button class="btn undo" id="btnUndo" type="button">Undo<span class="undo-time" id="undoTime"></span></button>
+    </div>
+  </div>
+
   <section class="section">
-    <div class="row-head"><span>Today</span><span class="figures" id="figures"></span></div>
+    <h2 class="row-head"><span>Today</span><span class="figures" id="figures"></span></h2>
     <div class="strip big" id="todayStrip" aria-label="Hits by hour today"></div>
   </section>
 
   <section class="section">
-    <div class="row-head"><span>Last 7 days</span><span class="figures">hits · hours over</span></div>
+    <h2 class="row-head"><span>Previous 7 days</span><span class="figures">hits · hours over</span></h2>
     <ol class="days" id="history"></ol>
+    <p class="foot" id="historyNote" hidden>Gray rows are baseline days with no cap.</p>
   </section>
 
   <section class="tools">
-    <button class="btn ghost" id="btnExport" type="button">Export</button>
-    <button class="btn ghost danger" id="btnReset" type="button">Reset</button>
+    <button class="btn ghost" id="btnExport" type="button">Copy data</button>
+    <button class="btn ghost" id="btnImport" type="button">Import</button>
+    <button class="btn ghost danger" id="btnReset" type="button">Delete all data</button>
   </section>
 </main>
-
-<div class="thumb">
-  <div class="thumb-inner">
-    <button class="btn plus" id="btnPlus" type="button" aria-label="Log one hit">+1</button>
-    <button class="btn undo" id="btnUndo" type="button">Undo</button>
-  </div>
-</div>
 
 <script>
 (function () {
@@ -327,7 +442,9 @@
   var STORAGE_KEY = 'taper.hits';
   var HITS_PER_POD = 200;
   var MS_PER_DAY = 86400000;
+  var MS_PER_HOUR = 3600000;
   var SVG_NS = 'http://www.w3.org/2000/svg';
+  var LONG_PRESS_MS = 500;
 
   // ---- Date helpers (all in the device's local time) ----
   function pad(n) { return (n < 10 ? '0' : '') + n; }
@@ -342,9 +459,18 @@
   function fmtDate(d) {
     return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
   }
-  function fmtDow(d) {
-    return d.toLocaleDateString(undefined, { weekday: 'short' }) + ' ' + d.getDate();
+  function fmtTime(d) {
+    return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
   }
+  // "Wed 14" inside the current month, "Wed 30 Sep" once the month rolls over.
+  function fmtDow(d, ref) {
+    var s = d.toLocaleDateString(undefined, { weekday: 'short' }) + ' ' + d.getDate();
+    if (d.getMonth() !== ref.getMonth() || d.getFullYear() !== ref.getFullYear()) {
+      s += ' ' + d.toLocaleDateString(undefined, { month: 'short' });
+    }
+    return s;
+  }
+  function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
 
   // ---- Schedule ----
   function phaseFor(date) {
@@ -371,11 +497,105 @@
       return [];
     }
   }
+  // Returns true only when the write actually landed.
   function saveHits(list) {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); } catch (e) { /* storage unavailable */ }
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // ---- DOM ----
+  var $ = function (id) { return document.getElementById(id); };
+  var el = {
+    date: $('date'), stamp: $('stamp'), stairs: $('stairs'), week: $('week'), daysLeft: $('daysLeft'),
+    hour: $('hour'), ring: $('ring'), count: $('count'), sub: $('sub'), reset: $('reset'),
+    figures: $('figures'), todayStrip: $('todayStrip'), history: $('history'),
+    btnPlus: $('btnPlus'), btnUndo: $('btnUndo'), btnExport: $('btnExport'), btnReset: $('btnReset'),
+    // Added by the audit pass; every one of these is optional at runtime.
+    live: $('live'), note: $('note'), backdate: $('backdate'), undoTime: $('undoTime'),
+    btnImport: $('btnImport'), historyNote: $('historyNote')
+  };
+
+  // If the core markup is not there, do nothing rather than throw.
+  var REQUIRED = ['date', 'stamp', 'stairs', 'week', 'daysLeft', 'hour', 'ring', 'count', 'sub',
+    'reset', 'figures', 'todayStrip', 'history', 'btnPlus', 'btnUndo', 'btnExport', 'btnReset'];
+  for (var q = 0; q < REQUIRED.length; q++) {
+    if (!el[REQUIRED[q]]) return;
   }
 
   var hits = loadHits();
+  var storageFailed = false;
+
+  // ---- Notes: one line above the thumb controls ----
+  var noteTimer = null, noteTag = null, noteAction = null;
+  function note(text, opts) {
+    if (!el.note) return;
+    opts = opts || {};
+    clearTimeout(noteTimer);
+    noteTimer = null;
+    noteTag = opts.tag || null;
+    noteAction = typeof opts.action === 'function' ? opts.action : null;
+    el.note.textContent = text;
+    el.note.className = 'note' + (opts.warn ? ' warn' : '') + (noteAction ? ' action' : '');
+    if (noteAction) {
+      el.note.setAttribute('role', 'button');
+      el.note.setAttribute('tabindex', '0');
+    } else {
+      el.note.removeAttribute('role');
+      el.note.removeAttribute('tabindex');
+    }
+    el.note.hidden = false;
+    if (opts.ms) {
+      noteTimer = setTimeout(function () {
+        clearNote();
+        if (storageFailed) storageNote();
+      }, opts.ms);
+    }
+  }
+  function clearNote(tag) {
+    if (!el.note) return;
+    if (tag && noteTag !== tag) return;
+    clearTimeout(noteTimer);
+    noteTimer = null;
+    noteTag = null;
+    noteAction = null;
+    el.note.textContent = '';
+    el.note.className = 'note';
+    el.note.removeAttribute('role');
+    el.note.removeAttribute('tabindex');
+    el.note.hidden = true;
+  }
+  function storageNote() {
+    note('Not saved. Storage is full or blocked.', { warn: true, tag: 'storage' });
+  }
+  if (el.note) {
+    el.note.addEventListener('click', function () { if (noteAction) noteAction(); });
+    el.note.addEventListener('keydown', function (e) {
+      if (!noteAction) return;
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+        e.preventDefault();
+        noteAction();
+      }
+    });
+  }
+
+  // Every write goes through here so a failed save is visible and retried.
+  function persist() {
+    var ok = saveHits(hits);
+    if (ok) {
+      if (storageFailed) {
+        storageFailed = false;
+        clearNote('storage');
+      }
+    } else {
+      storageFailed = true;
+      storageNote();
+    }
+    return ok;
+  }
 
   // ---- Stats: bucket every hit by local day and hour ----
   function bucketHits(list) {
@@ -404,15 +624,24 @@
     }
     return { total: total, perHour: b ? b.perHour : null, over: over, cap: cap };
   }
-
-  // ---- DOM ----
-  var $ = function (id) { return document.getElementById(id); };
-  var el = {
-    date: $('date'), stamp: $('stamp'), stairs: $('stairs'), week: $('week'), daysLeft: $('daysLeft'),
-    hour: $('hour'), ring: $('ring'), count: $('count'), sub: $('sub'), reset: $('reset'),
-    figures: $('figures'), todayStrip: $('todayStrip'), history: $('history'),
-    btnPlus: $('btnPlus'), btnUndo: $('btnUndo'), btnExport: $('btnExport'), btnReset: $('btnReset')
-  };
+  // The live hour is counted by absolute (epoch) hour so a DST change cannot
+  // merge or split it. The 24-cell strips stay on local getHours() buckets.
+  function countThisHour(t) {
+    var epochHour = Math.floor(t / MS_PER_HOUR);
+    var n = 0;
+    for (var i = 0; i < hits.length; i++) {
+      if (Math.floor(Date.parse(hits[i]) / MS_PER_HOUR) === epochHour) n++;
+    }
+    return n;
+  }
+  function newestIndex() {
+    if (!hits.length) return -1;
+    var latest = 0;
+    for (var i = 1; i < hits.length; i++) {
+      if (Date.parse(hits[i]) > Date.parse(hits[latest])) latest = i;
+    }
+    return latest;
+  }
 
   function svg(tag, attrs) {
     var n = document.createElementNS(SVG_NS, tag);
@@ -435,7 +664,7 @@
     }
   })();
 
-  // ---- Ring geometry: 0° is 12 o'clock, clockwise ----
+  // ---- Ring geometry: 0 degrees is 12 o'clock, clockwise ----
   var CX = 120, CY = 120, R_SEG = 94, R_TIME = 114;
   function polar(r, deg) {
     var rad = (deg - 90) * Math.PI / 180;
@@ -471,7 +700,7 @@
     el.ring.appendChild(ring.timeDot);
   }
 
-  var lastHourKey = null, lastCount = 0;
+  var lastHourKey = null, lastCount = 0, lastLiveKey = null;
 
   function render() {
     var now = new Date();
@@ -479,7 +708,7 @@
     var buckets = bucketHits(hits);
     var today = dayStats(buckets, now);
     var cap = phase.cap;
-    var hourCount = today.perHour ? today.perHour[now.getHours()] : 0;
+    var hourCount = countThisHour(now.getTime());
 
     // Top line
     el.date.textContent = fmtDate(now);
@@ -492,14 +721,16 @@
       else if (phase.week !== null && i === phase.week - 1) cls += ' now';
       stairBars[i].setAttribute('class', cls);
     }
-    el.week.textContent = phase.baseline ? 'Baseline week' : (phase.quit ? 'Quit' : 'Week ' + phase.week + ' of ' + TOTAL_WEEKS);
+    if (phase.baseline) el.week.textContent = 'Baseline week';
+    else if (phase.quit) el.week.textContent = 'Quit';
+    else el.week.textContent = 'Week ' + phase.week + ' of ' + TOTAL_WEEKS + ' · ' + cap + ' an hour';
     var daysLeft = daysBetween(now, parseLocalDate(QUIT_DATE));
     el.daysLeft.textContent = daysLeft > 0 ? daysLeft + (daysLeft === 1 ? ' day to quit' : ' days to quit')
       : (daysLeft === 0 ? 'Quit day' : (-daysLeft) + (daysLeft === -1 ? ' day since quit' : ' days since quit'));
 
     // Ring
     if (ring.cap !== cap) buildRing(cap);
-    var hourKey = dayKey(now) + '-' + now.getHours();
+    var hourKey = String(Math.floor(now.getTime() / MS_PER_HOUR));
     var popIndex = (hourKey === lastHourKey && hourCount === lastCount + 1) ? hourCount - 1 : -1;
     for (var s = 0; s < ring.segs.length; s++) {
       ring.segs[s].setAttribute('class', 'seg' + (s < hourCount ? ' used' : '') + (s === popIndex ? ' pop' : ''));
@@ -515,14 +746,38 @@
 
     el.count.textContent = String(hourCount);
     var capped = cap !== null && hourCount >= cap;
-    if (cap === null) el.sub.textContent = 'this hour · no cap';
-    else if (phase.quit) el.sub.textContent = hourCount === 0 ? 'Quit · none allowed' : 'over by ' + hourCount;
-    else if (hourCount < cap) el.sub.textContent = (cap - hourCount) + ' left of ' + cap;
-    else if (hourCount === cap) el.sub.textContent = 'Cap reached';
-    else el.sub.textContent = 'over by ' + (hourCount - cap) + ' · cap ' + cap;
     var minsLeft = Math.max(1, Math.ceil((3600 - (now.getMinutes() * 60 + now.getSeconds())) / 60));
+
+    // Sub line + the one live-region sentence.
+    var subText, liveKey, liveText;
+    if (phase.quit) {
+      subText = 'Quit · none allowed';
+      liveKey = hourCount + ' this hour, quit day, none allowed.';
+      liveText = liveKey;
+    } else {
+      if (cap === null) {
+        subText = 'this hour · no cap';
+        liveKey = hourCount + ' this hour, no cap,';
+      } else if (hourCount < cap) {
+        subText = hourCount + ' of ' + cap + ' · ' + (cap - hourCount) + ' left';
+        liveKey = hourCount + ' of ' + cap + ' this hour, ' + (cap - hourCount) + ' left,';
+      } else if (hourCount === cap) {
+        subText = 'Cap reached · ' + hourCount + ' of ' + cap;
+        liveKey = 'Cap reached, ' + hourCount + ' of ' + cap + ',';
+      } else {
+        subText = 'Over by ' + (hourCount - cap) + ' · cap ' + cap;
+        liveKey = 'Over by ' + (hourCount - cap) + ', cap ' + cap + ',';
+      }
+      liveText = liveKey + ' resets in ' + plural(minsLeft, 'minute', 'minutes') + '.';
+    }
+    el.sub.textContent = subText;
     el.reset.textContent = 'resets in ' + minsLeft + ' min';
     document.body.classList.toggle('capped', capped);
+    // Announce only when the state changes; the ticking minute alone must not re-announce.
+    if (el.live && liveKey !== lastLiveKey) {
+      el.live.textContent = liveText;
+      lastLiveKey = liveKey;
+    }
 
     // Today
     var overText = today.cap === null ? '' : ' · ' + (today.over > 0 ? '<span class="bad">' + today.over + ' h over</span>' : '0 h over');
@@ -531,13 +786,18 @@
 
     // History: the 7 days before today
     var frag = document.createDocumentFragment();
+    var anyBaseline = false;
     for (var d = 1; d <= 7; d++) {
       var day = addDays(now, -d);
       var st = dayStats(buckets, day);
       var li = document.createElement('li');
+      if (st.cap === null) {
+        li.className = 'baseline';
+        anyBaseline = true;
+      }
       var dow = document.createElement('span');
       dow.className = 'dow';
-      dow.textContent = fmtDow(day);
+      dow.textContent = fmtDow(day, now);
       var strip = document.createElement('div');
       strip.className = 'strip';
       fillStrip(strip, st, -1);
@@ -552,8 +812,18 @@
     }
     el.history.textContent = '';
     el.history.appendChild(frag);
+    if (el.historyNote) el.historyNote.hidden = !anyBaseline;
 
-    el.btnUndo.disabled = hits.length === 0;
+    // Undo only reaches back one hour, and says which hit it would remove.
+    var idx = newestIndex();
+    var undoable = false, undoAt = 0;
+    if (idx >= 0) {
+      undoAt = Date.parse(hits[idx]);
+      var age = now.getTime() - undoAt;
+      undoable = age < MS_PER_HOUR && age > -60000;
+    }
+    el.btnUndo.disabled = !undoable;
+    if (el.undoTime) el.undoTime.textContent = undoable ? fmtTime(new Date(undoAt)) : '';
   }
 
   // One cell per clock hour; tone by how the hour went against its cap.
@@ -580,20 +850,22 @@
   }
 
   // ---- Actions ----
-  function addHit() {
-    hits.push(new Date().toISOString());
-    saveHits(hits);
+  function addHit(when) {
+    hits.push(new Date(when === undefined ? Date.now() : when).toISOString());
+    var ok = persist();
     render();
+    return ok;
   }
   function undoHit() {
-    if (!hits.length) return;
-    var latest = 0;
-    for (var i = 1; i < hits.length; i++) {
-      if (Date.parse(hits[i]) > Date.parse(hits[latest])) latest = i;
-    }
-    hits.splice(latest, 1);
-    saveHits(hits);
+    var idx = newestIndex();
+    if (idx < 0) return;
+    var at = Date.parse(hits[idx]);
+    var age = Date.now() - at;
+    if (!(age < MS_PER_HOUR && age > -60000)) return;
+    hits.splice(idx, 1);
+    var ok = persist();
     render();
+    if (ok) note('Removed the ' + fmtTime(new Date(at)) + ' hit', { ms: 2500 });
   }
   function flashLabel(btn, text) {
     var original = btn.dataset.label || btn.textContent;
@@ -621,9 +893,10 @@
   }
   function exportHits() {
     var text = JSON.stringify(hits);
+    var n = hits.length;
     var done = function (ok) {
       if (ok) {
-        flashLabel(el.btnExport, 'Copied ' + hits.length);
+        flashLabel(el.btnExport, 'Copied ' + plural(n, 'hit', 'hits'));
         return;
       }
       // Last resort: show the JSON so it can be copied by hand.
@@ -637,17 +910,131 @@
       done(legacyCopy(text));
     }
   }
+  function importHits() {
+    var raw;
+    try {
+      raw = window.prompt('Paste your hits JSON:');
+    } catch (e) {
+      note('Import needs a paste dialog.', { warn: true, ms: 4000 });
+      return;
+    }
+    if (raw === null || raw === undefined) return;
+    raw = String(raw).replace(/^\s+|\s+$/g, '');
+    if (!raw) return;
+    var parsed = null, bad = false;
+    try { parsed = JSON.parse(raw); } catch (e) { bad = true; }
+    if (bad || !Array.isArray(parsed)) {
+      note('Could not read that. Paste the JSON from Copy data.', { warn: true, ms: 4000 });
+      return;
+    }
+    var i, valid = [], pasted = {};
+    for (i = 0; i < parsed.length; i++) {
+      var v = parsed[i];
+      if (typeof v !== 'string' || isNaN(Date.parse(v)) || pasted[v]) continue;
+      pasted[v] = 1;
+      valid.push(v);
+    }
+    if (parsed.length && !valid.length) {
+      note('Could not read that. Paste the JSON from Copy data.', { warn: true, ms: 4000 });
+      return;
+    }
+    // Merge, never replace: existing hits always survive an import.
+    var seen = {};
+    var merged = [];
+    for (i = 0; i < hits.length; i++) {
+      if (!seen[hits[i]]) { seen[hits[i]] = 1; merged.push(hits[i]); }
+    }
+    var added = 0;
+    for (i = 0; i < valid.length; i++) {
+      if (!seen[valid[i]]) { seen[valid[i]] = 1; merged.push(valid[i]); added++; }
+    }
+    merged.sort(function (a, b) { return Date.parse(a) - Date.parse(b); });
+    hits = merged;
+    var ok = persist();
+    render();
+    if (ok) {
+      note('Imported ' + plural(valid.length, 'hit', 'hits') + ' (' + added + ' new)', { ms: 4000 });
+    }
+  }
   function resetHits() {
-    if (!window.confirm('Delete all logged hits? This cannot be undone.')) return;
+    if (!window.confirm('Delete all logged hits? Use Copy data first if you want to keep them. This cannot be undone.')) return;
     hits = [];
-    try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* ignore */ }
+    var ok = false;
+    try { localStorage.removeItem(STORAGE_KEY); ok = true; } catch (e) { ok = false; }
+    if (ok && storageFailed) {
+      storageFailed = false;
+      clearNote('storage');
+    }
+    hideBackdate();
     render();
   }
 
-  el.btnPlus.addEventListener('click', addHit);
+  // ---- Backdating: long-press +1 ----
+  function showBackdate() {
+    if (!el.backdate) return;
+    el.backdate.hidden = false;
+  }
+  function hideBackdate() {
+    if (!el.backdate) return;
+    el.backdate.hidden = true;
+  }
+
+  var pressTimer = null, suppressClick = false;
+  function startPress() {
+    if (!el.backdate) return;
+    suppressClick = false;
+    clearTimeout(pressTimer);
+    pressTimer = setTimeout(function () {
+      pressTimer = null;
+      suppressClick = true;
+      showBackdate();
+    }, LONG_PRESS_MS);
+  }
+  function endPress() {
+    clearTimeout(pressTimer);
+    pressTimer = null;
+  }
+  (function bindPress() {
+    var down, up;
+    if (window.PointerEvent) {
+      down = ['pointerdown'];
+      up = ['pointerup', 'pointercancel', 'pointerleave'];
+    } else {
+      down = ['touchstart', 'mousedown'];
+      up = ['touchend', 'touchcancel', 'mouseup', 'mouseleave'];
+    }
+    for (var i = 0; i < down.length; i++) el.btnPlus.addEventListener(down[i], startPress);
+    for (var j = 0; j < up.length; j++) el.btnPlus.addEventListener(up[j], endPress);
+    // A long press must not raise the OS callout menu on top of the chooser.
+    el.btnPlus.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  })();
+
+  el.btnPlus.addEventListener('click', function () {
+    if (suppressClick) { suppressClick = false; return; }
+    hideBackdate();
+    addHit();
+  });
   el.btnUndo.addEventListener('click', undoHit);
   el.btnExport.addEventListener('click', exportHits);
   el.btnReset.addEventListener('click', resetHits);
+  if (el.btnImport) el.btnImport.addEventListener('click', importHits);
+
+  if (el.backdate) {
+    el.backdate.addEventListener('click', function (e) {
+      var t = e.target;
+      while (t && t !== el.backdate && !(t.hasAttribute && (t.hasAttribute('data-min') || t.hasAttribute('data-cancel')))) {
+        t = t.parentNode;
+      }
+      if (!t || t === el.backdate || !t.hasAttribute) return;
+      if (t.hasAttribute('data-cancel')) { hideBackdate(); return; }
+      var min = parseInt(t.getAttribute('data-min'), 10);
+      if (isNaN(min)) return;
+      var when = Date.now() - min * 60000;
+      var ok = addHit(when);
+      hideBackdate();
+      if (ok) note('Logged a hit for ' + fmtTime(new Date(when)), { ms: 2500 });
+    });
+  }
 
   // ---- Keep the clock honest: re-render at the top of each hour and whenever the app comes back ----
   var hourTimer = null;
@@ -658,7 +1045,8 @@
     hourTimer = setTimeout(function () { render(); scheduleHourTick(); }, next - now);
   }
   function wake() {
-    hits = loadHits();
+    // While a save is failing, memory is the only copy: never overwrite it from storage.
+    if (!storageFailed) hits = loadHits();
     render();
     scheduleHourTick();
   }
@@ -672,6 +1060,19 @@
 
   // ---- Offline shell: service workers only exist over http(s), never on file:// ----
   if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+    // Only a page that was already controlled can be "updated"; a first install is silent.
+    var hadController = !!navigator.serviceWorker.controller;
+    var noticeShown = false;
+    if (hadController) {
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (noticeShown) return;
+        noticeShown = true;
+        note('Updated · tap to reload', {
+          action: function () { location.reload(); },
+          tag: 'update'
+        });
+      });
+    }
     var registerSW = function () {
       navigator.serviceWorker.register('./sw.js').catch(function () { /* offline support is optional */ });
     };
