@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Taper">
+<meta name="theme-color" content="#0a66d6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a84ff" media="(prefers-color-scheme: dark)">
+<title>Taper</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f2f2f7;
+    --card: #ffffff;
+    --text: #111114;
+    --muted: #6e6e73;
+    --accent: #0a66d6;
+    --red: #d9342b;
+    --btn: #e5e5ea;
+    --divider: rgba(0, 0, 0, 0.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #000000;
+      --card: #1c1c1e;
+      --text: #f2f2f7;
+      --muted: #8e8e93;
+      --accent: #0a84ff;
+      --red: #c62f28;
+      --btn: #2c2c2e;
+      --divider: rgba(255, 255, 255, 0.1);
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--accent);
+    color: #fff;
+    padding: calc(env(safe-area-inset-top, 0px) + 12px)
+             calc(env(safe-area-inset-right, 0px) + 18px)
+             12px
+             calc(env(safe-area-inset-left, 0px) + 18px);
+  }
+  .hdr-date { font-size: 24px; font-weight: 700; letter-spacing: -0.2px; }
+  .hdr-meta { margin-top: 3px; font-size: 15px; opacity: 0.92; display: flex; flex-wrap: wrap; gap: 0 6px; }
+
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 14px
+             calc(env(safe-area-inset-right, 0px) + 14px)
+             6px
+             calc(env(safe-area-inset-left, 0px) + 14px);
+  }
+
+  .card {
+    background: var(--card);
+    border-radius: 18px;
+    padding: 16px;
+  }
+  .card h2 {
+    margin: 0 0 12px;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--muted);
+  }
+
+  /* Hour panel */
+  .hour {
+    text-align: center;
+    transition: background-color 0.2s, color 0.2s;
+  }
+  .hour-count {
+    font-size: 64px;
+    font-weight: 700;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -1px;
+  }
+  .hour-cap { font-size: 30px; font-weight: 600; opacity: 0.6; }
+  .hour-label { margin-top: 8px; font-size: 16px; color: var(--muted); }
+  .hour.over { background: var(--red); color: #fff; }
+  .hour.over .hour-cap { opacity: 0.85; }
+  .hour.over .hour-label { color: #fff; font-weight: 700; }
+
+  .btn {
+    appearance: none;
+    -webkit-appearance: none;
+    border: 0;
+    margin: 0;
+    font: inherit;
+    border-radius: 16px;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none;
+    user-select: none;
+    transition: transform 0.08s, filter 0.08s;
+  }
+  .btn:active { transform: scale(0.985); filter: brightness(0.92); }
+  .btn:disabled { opacity: 0.4; cursor: default; transform: none; filter: none; }
+
+  .btn-plus {
+    width: 100%;
+    min-height: 88px;
+    margin-top: 18px;
+    font-size: 40px;
+    font-weight: 700;
+    background: var(--accent);
+    color: #fff;
+  }
+  .hour.over .btn-plus { background: rgba(255, 255, 255, 0.24); }
+  .btn-undo {
+    width: 100%;
+    min-height: 48px;
+    margin-top: 10px;
+    font-size: 17px;
+    font-weight: 600;
+    background: var(--btn);
+    color: var(--text);
+  }
+  .hour.over .btn-undo { background: rgba(0, 0, 0, 0.2); color: #fff; }
+
+  /* Today panel */
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .stat { text-align: center; }
+  .stat-v { font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .stat-l { margin-top: 4px; font-size: 13px; color: var(--muted); }
+
+  /* History */
+  .history { margin: 0; padding: 0; list-style: none; }
+  .history li {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 6px 0;
+    border-top: 1px solid var(--divider);
+    font-size: 16px;
+    font-variant-numeric: tabular-nums;
+  }
+  .history li:first-child { border-top: 0; }
+  .h-day { flex: 1; }
+  .h-hits { width: 78px; text-align: right; font-weight: 600; }
+  .h-over { width: 78px; text-align: right; color: var(--muted); }
+  .h-over.bad { color: var(--red); font-weight: 600; }
+
+  footer {
+    display: flex;
+    gap: 12px;
+    padding: 8px
+             calc(env(safe-area-inset-right, 0px) + 14px)
+             calc(env(safe-area-inset-bottom, 0px) + 14px)
+             calc(env(safe-area-inset-left, 0px) + 14px);
+  }
+  .btn-foot {
+    flex: 1;
+    min-height: 48px;
+    font-size: 17px;
+    font-weight: 600;
+    background: var(--card);
+    color: var(--accent);
+  }
+  .btn-foot.danger { color: var(--red); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hdr-date" id="hdrDate">—</div>
+  <div class="hdr-meta">
+    <span id="hdrStrength">—</span><span aria-hidden="true">·</span>
+    <span id="hdrWeek">—</span><span aria-hidden="true">·</span>
+    <span id="hdrDays">—</span>
+  </div>
+</header>
+
+<main>
+  <section class="card hour" id="hourPanel" aria-live="polite">
+    <div class="hour-count"><span id="hourCount">0</span><span class="hour-cap" id="hourCap"></span></div>
+    <div class="hour-label" id="hourLabel">this hour</div>
+    <button class="btn btn-plus" id="btnPlus" type="button" aria-label="Log one hit">+1</button>
+    <button class="btn btn-undo" id="btnUndo" type="button">Undo</button>
+  </section>
+
+  <section class="card">
+    <h2>Today</h2>
+    <div class="stats">
+      <div class="stat"><div class="stat-v" id="todayTotal">0</div><div class="stat-l">hits</div></div>
+      <div class="stat"><div class="stat-v" id="todayPods">0.0</div><div class="stat-l">pods</div></div>
+      <div class="stat"><div class="stat-v" id="todayOver">0</div><div class="stat-l">hours over cap</div></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Last 7 days</h2>
+    <ul class="history" id="history"></ul>
+  </section>
+</main>
+
+<footer>
+  <button class="btn btn-foot" id="btnExport" type="button">Export</button>
+  <button class="btn btn-foot danger" id="btnReset" type="button">Reset</button>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  // Each entry applies from its start date (local time) until the next entry's start.
+  var SCHEDULE = [
+    { start: '2026-09-15', strength: '5%',   hourlyCap: 12 },
+    { start: '2026-09-22', strength: '5%',   hourlyCap: 10 },
+    { start: '2026-09-29', strength: '5%',   hourlyCap: 8 },
+    { start: '2026-10-06', strength: '3%',   hourlyCap: 8 },
+    { start: '2026-10-13', strength: '3%',   hourlyCap: 7 },
+    { start: '2026-10-20', strength: '3%',   hourlyCap: 6 },
+    { start: '2026-10-27', strength: '3%',   hourlyCap: 5 },
+    { start: '2026-11-03', strength: '3%',   hourlyCap: 4 },
+    { start: '2026-11-10', strength: '3%',   hourlyCap: 3 },
+    { start: '2026-11-17', strength: '3%',   hourlyCap: 3 },
+    { start: '2026-11-24', strength: '3%',   hourlyCap: 2 },
+    { start: '2026-12-01', strength: '3%',   hourlyCap: 2 },
+    { start: '2026-12-08', strength: '3%',   hourlyCap: 1 },
+    { start: '2026-12-15', strength: '3%',   hourlyCap: 1 },
+    { start: '2026-12-22', strength: '3%',   hourlyCap: 1 },
+    { start: '2026-12-26', strength: 'quit', hourlyCap: 0 }
+  ];
+  var QUIT_DATE = '2026-12-26';
+  var TOTAL_WEEKS = 15;
+  var STORAGE_KEY = 'taper.hits';
+  var HITS_PER_POD = 200;
+  var MS_PER_DAY = 86400000;
+
+  // ---- Date helpers (all in the device's local time) ----
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function parseLocalDate(ymd) {
+    var p = ymd.split('-');
+    return new Date(+p[0], +p[1] - 1, +p[2]);
+  }
+  function startOfDay(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+  function dayKey(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function daysBetween(a, b) { return Math.round((startOfDay(b) - startOfDay(a)) / MS_PER_DAY); }
+  function addDays(d, n) { return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n); }
+  function fmtDate(d) {
+    return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+  }
+
+  // ---- Schedule ----
+  function phaseFor(date) {
+    var t = startOfDay(date).getTime();
+    var idx = -1;
+    for (var i = 0; i < SCHEDULE.length; i++) {
+      if (parseLocalDate(SCHEDULE[i].start).getTime() <= t) idx = i;
+    }
+    if (idx < 0) return { baseline: true, quit: false, strength: null, cap: null, week: null };
+    var e = SCHEDULE[idx];
+    var quit = e.strength === 'quit';
+    return { baseline: false, quit: quit, strength: e.strength, cap: e.hourlyCap, week: quit ? null : idx + 1 };
+  }
+
+  // ---- Storage ----
+  function loadHits() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return [];
+      var arr = JSON.parse(raw);
+      if (!Array.isArray(arr)) return [];
+      return arr.filter(function (s) { return typeof s === 'string' && !isNaN(Date.parse(s)); });
+    } catch (e) {
+      return [];
+    }
+  }
+  function saveHits(list) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); } catch (e) { /* storage unavailable */ }
+  }
+
+  var hits = loadHits();
+
+  // ---- Stats: bucket every hit by local day and hour ----
+  function bucketHits(list) {
+    var days = {};
+    for (var i = 0; i < list.length; i++) {
+      var d = new Date(list[i]);
+      var k = dayKey(d);
+      var b = days[k];
+      if (!b) {
+        b = { total: 0, perHour: [] };
+        for (var h = 0; h < 24; h++) b.perHour.push(0);
+        days[k] = b;
+      }
+      b.total++;
+      b.perHour[d.getHours()]++;
+    }
+    return days;
+  }
+  function dayStats(buckets, day) {
+    var b = buckets[dayKey(day)] || null;
+    var cap = phaseFor(day).cap;
+    var total = b ? b.total : 0;
+    var over = 0;
+    if (b && cap !== null) {
+      for (var h = 0; h < 24; h++) if (b.perHour[h] > cap) over++;
+    }
+    return { total: total, perHour: b ? b.perHour : null, over: over, cap: cap };
+  }
+
+  // ---- DOM ----
+  var $ = function (id) { return document.getElementById(id); };
+  var el = {
+    hdrDate: $('hdrDate'), hdrStrength: $('hdrStrength'), hdrWeek: $('hdrWeek'), hdrDays: $('hdrDays'),
+    hourPanel: $('hourPanel'), hourCount: $('hourCount'), hourCap: $('hourCap'), hourLabel: $('hourLabel'),
+    btnPlus: $('btnPlus'), btnUndo: $('btnUndo'),
+    todayTotal: $('todayTotal'), todayPods: $('todayPods'), todayOver: $('todayOver'),
+    history: $('history'), btnExport: $('btnExport'), btnReset: $('btnReset')
+  };
+
+  function render() {
+    var now = new Date();
+    var phase = phaseFor(now);
+    var buckets = bucketHits(hits);
+    var today = dayStats(buckets, now);
+
+    // Header
+    el.hdrDate.textContent = fmtDate(now);
+    el.hdrStrength.textContent = phase.baseline ? '—' : (phase.quit ? 'Quit' : phase.strength);
+    el.hdrWeek.textContent = phase.baseline ? 'Baseline week'
+      : (phase.quit ? 'Quit' : 'Week ' + phase.week + ' of ' + TOTAL_WEEKS);
+    var daysLeft = daysBetween(now, parseLocalDate(QUIT_DATE));
+    el.hdrDays.textContent = daysLeft > 0 ? daysLeft + (daysLeft === 1 ? ' day to quit' : ' days to quit')
+      : (daysLeft === 0 ? 'Quit day' : (-daysLeft) + (daysLeft === -1 ? ' day since quit' : ' days since quit'));
+
+    // Hour panel
+    var hourCount = today.perHour ? today.perHour[now.getHours()] : 0;
+    el.hourCount.textContent = String(hourCount);
+    if (phase.cap === null) {
+      el.hourCap.textContent = '';
+      el.hourLabel.textContent = 'this hour · no cap';
+      el.hourPanel.classList.remove('over');
+    } else {
+      el.hourCap.textContent = ' / ' + phase.cap;
+      var capReached = hourCount >= phase.cap;
+      el.hourLabel.textContent = capReached ? 'Cap reached' : 'this hour';
+      el.hourPanel.classList.toggle('over', capReached);
+    }
+    el.btnUndo.disabled = hits.length === 0;
+
+    // Today panel
+    el.todayTotal.textContent = String(today.total);
+    el.todayPods.textContent = (today.total / HITS_PER_POD).toFixed(1);
+    el.todayOver.textContent = today.cap === null ? '—' : String(today.over);
+
+    // History: the 7 days before today
+    var frag = document.createDocumentFragment();
+    for (var i = 1; i <= 7; i++) {
+      var day = addDays(now, -i);
+      var s = dayStats(buckets, day);
+      var li = document.createElement('li');
+      var dayEl = document.createElement('span');
+      dayEl.className = 'h-day';
+      dayEl.textContent = i === 1 ? 'Yesterday' : fmtDate(day);
+      var hitsEl = document.createElement('span');
+      hitsEl.className = 'h-hits';
+      hitsEl.textContent = s.total + (s.total === 1 ? ' hit' : ' hits');
+      var overEl = document.createElement('span');
+      overEl.className = 'h-over' + (s.over > 0 ? ' bad' : '');
+      overEl.textContent = s.cap === null ? '—' : s.over + ' over';
+      li.appendChild(dayEl);
+      li.appendChild(hitsEl);
+      li.appendChild(overEl);
+      frag.appendChild(li);
+    }
+    el.history.textContent = '';
+    el.history.appendChild(frag);
+  }
+
+  // ---- Actions ----
+  function addHit() {
+    hits.push(new Date().toISOString());
+    saveHits(hits);
+    render();
+  }
+  function undoHit() {
+    if (!hits.length) return;
+    var latest = 0;
+    for (var i = 1; i < hits.length; i++) {
+      if (Date.parse(hits[i]) > Date.parse(hits[latest])) latest = i;
+    }
+    hits.splice(latest, 1);
+    saveHits(hits);
+    render();
+  }
+  function flashLabel(btn, text) {
+    var original = btn.dataset.label || btn.textContent;
+    btn.dataset.label = original;
+    btn.textContent = text;
+    clearTimeout(btn._flashTimer);
+    btn._flashTimer = setTimeout(function () { btn.textContent = original; }, 1500);
+  }
+  function legacyCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.top = '0';
+    ta.style.left = '0';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    document.body.removeChild(ta);
+    return ok;
+  }
+  function exportHits() {
+    var text = JSON.stringify(hits);
+    var done = function (ok) {
+      if (ok) {
+        flashLabel(el.btnExport, 'Copied ' + hits.length);
+        return;
+      }
+      // Last resort: show the JSON so it can be copied by hand.
+      var shown = false;
+      try { window.prompt('Copy your hits JSON:', text); shown = true; } catch (e) { shown = false; }
+      if (!shown) flashLabel(el.btnExport, 'Copy failed');
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(legacyCopy(text)); });
+    } else {
+      done(legacyCopy(text));
+    }
+  }
+  function resetHits() {
+    if (!window.confirm('Delete all logged hits? This cannot be undone.')) return;
+    hits = [];
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* ignore */ }
+    render();
+  }
+
+  el.btnPlus.addEventListener('click', addHit);
+  el.btnUndo.addEventListener('click', undoHit);
+  el.btnExport.addEventListener('click', exportHits);
+  el.btnReset.addEventListener('click', resetHits);
+
+  // ---- Keep the clock honest: re-render at the top of each hour and whenever the app comes back ----
+  var hourTimer = null;
+  function scheduleHourTick() {
+    clearTimeout(hourTimer);
+    var now = new Date();
+    var next = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() + 1, 0, 0, 250);
+    hourTimer = setTimeout(function () { render(); scheduleHourTick(); }, next - now);
+  }
+  function wake() {
+    hits = loadHits();
+    render();
+    scheduleHourTick();
+  }
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) wake(); });
+  window.addEventListener('pageshow', wake);
+  window.addEventListener('focus', wake);
+  setInterval(render, 30000);
+
+  render();
+  scheduleHourTick();
+
+  // ---- Offline shell: service workers only exist over http(s), never on file:// ----
+  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+    var registerSW = function () {
+      navigator.serviceWorker.register('./sw.js').catch(function () { /* offline support is optional */ });
+    };
+    if (document.readyState === 'complete') registerSW();
+    else window.addEventListener('load', registerSW);
+  }
+})();
+</script>
+</body>
+</html>
