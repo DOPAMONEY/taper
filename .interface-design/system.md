@@ -36,3 +36,11 @@
 - Motion: press scale(.97) 120ms ease-out; new segment `pop` 240ms; color shifts 200ms; reduced-motion drops all.
 - Thumb bar also hosts `#note` (transient/persistent messages; `warn` ember, `action` underlined + tappable) and `#backdate` (long-press +1 chooser: 5/15/30 min ago chips, 44px). Undo shows the time of the hit it would remove and is enabled only within 60 min of it.
 - Tools row: Copy data · Import · Delete all data, ghost buttons, 16px gap. One `aria-live` region only (`#live`, sr-only), written only when the sentence changes.
+
+## Partner ledger (added 2026-09-08)
+A second, quieter ledger below your own history. Same date column and number columns so the two line up and compare by eye.
+- Row: `64px 1fr 40px 36px`, 32px tall (your own history rows are 36px). Day labels never wrap.
+- Instead of a 24-cell hour strip, a partner day gets one proportional bar in a `--track` rail, scaled to their own 8-day max. Honey under cap, ember plus an inset notch on a day that breached.
+- Heading carries their name, their latest day's figures, and the snapshot age in mono. Older than 36 hours turns ember.
+- Sharing is a text code, never a server: `TPR1~name~YYYYMMDD~d0.d1...~epochSeconds`, one entry per day, `62-3` for hits and hours over, bare number when nothing was breached, empty for a day with nothing. No timestamps ever leave the phone.
+- Partner data lives under `taper.partner` and is read-only. It is never merged into `taper.hits`.

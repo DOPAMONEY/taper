@@ -208,7 +208,7 @@
   .days { list-style: none; margin: 8px 0 0; padding: 0; }
   .days li {
     display: grid;
-    grid-template-columns: 50px 1fr 40px 36px;
+    grid-template-columns: 64px 1fr 40px 36px;
     align-items: center;
     gap: 12px;
     height: 36px;
@@ -217,7 +217,7 @@
   .days li:first-child { border-top: 0; }
   /* headroom so a taller over-cap cell is never clipped by the row above */
   .days li .strip { margin-top: 6px; }
-  .dow { font-size: 0.765rem; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+  .dow { font-size: 0.765rem; color: var(--ink-3); font-variant-numeric: tabular-nums; white-space: nowrap; }
   .n { text-align: right; font-size: 0.824rem; font-weight: 600; font-variant-numeric: tabular-nums; }
   .days li.baseline .n { color: var(--ink-2); font-weight: 500; }
   .over { text-align: right; font-size: 0.706rem; color: var(--ink-3); font-variant-numeric: tabular-nums; }
@@ -351,6 +351,26 @@
     .section { margin-top: 24px; }
   }
 
+  /* ---- Partner: a second ledger, quieter than your own ---- */
+  .partner-empty { margin: 10px 0 0; font-size: 0.765rem; color: var(--ink-2); }
+  .partner-when { font: 0.647rem/1 var(--face-mono); letter-spacing: 0.04em; color: var(--ink-3); }
+  .partner-when.stale { color: var(--ember); }
+  .pdays { list-style: none; margin: 10px 0 0; padding: 0; }
+  .pdays li {
+    display: grid;
+    grid-template-columns: 64px 1fr 40px 36px;
+    align-items: center;
+    gap: 12px;
+    height: 32px;
+    border-top: 1px solid var(--rule);
+  }
+  .pdays li:first-child { border-top: 0; }
+  .ptrack { height: 8px; border-radius: 2px; background: var(--track); }
+  .pfill { display: block; height: 100%; min-width: 2px; border-radius: 2px; background: var(--honey); }
+  /* a day that broke the cap reads ember and carries a notch, so hue is never the only cue */
+  .pfill.breach { background: var(--ember); box-shadow: inset -3px 0 0 var(--page); }
+  .partner-actions { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 14px; }
+
   @media (prefers-reduced-motion: reduce) {
     .seg.pop { animation: none; }
     .plus, .undo, .seg, .count, .sub, .step { transition: none; }
@@ -407,6 +427,17 @@
     <p class="foot" id="historyNote" hidden>Gray rows are baseline days with no cap.</p>
   </section>
 
+  <section class="section" id="partnerSection">
+    <h2 class="row-head"><span id="partnerLabel">Partner</span><span class="figures" id="partnerFigures"></span></h2>
+    <div id="partnerBody"></div>
+    <div class="partner-actions">
+      <button class="btn ghost" id="btnShare" type="button">Share my progress</button>
+      <button class="btn ghost" id="btnPartner" type="button">Paste their code</button>
+      <button class="btn ghost danger" id="btnPartnerClear" type="button" hidden>Remove</button>
+    </div>
+    <p class="foot">A code carries one number per day and nothing else. No times, no accounts, nothing uploaded.</p>
+  </section>
+
   <section class="tools">
     <button class="btn ghost" id="btnExport" type="button">Copy data</button>
     <button class="btn ghost" id="btnImport" type="button">Import</button>
@@ -445,6 +476,11 @@
   var MS_PER_HOUR = 3600000;
   var SVG_NS = 'http://www.w3.org/2000/svg';
   var LONG_PRESS_MS = 500;
+  var PARTNER_KEY = 'taper.partner';
+  var NAME_KEY = 'taper.name';
+  var SHARE_DAYS = 21;
+  var PARTNER_ROWS = 8;
+  var STALE_MS = 36 * MS_PER_HOUR;
 
   // ---- Date helpers (all in the device's local time) ----
   function pad(n) { return (n < 10 ? '0' : '') + n; }
@@ -516,7 +552,10 @@
     btnPlus: $('btnPlus'), btnUndo: $('btnUndo'), btnExport: $('btnExport'), btnReset: $('btnReset'),
     // Added by the audit pass; every one of these is optional at runtime.
     live: $('live'), note: $('note'), backdate: $('backdate'), undoTime: $('undoTime'),
-    btnImport: $('btnImport'), historyNote: $('historyNote')
+    btnImport: $('btnImport'), historyNote: $('historyNote'),
+    // Partner sharing; all optional, the app runs fine without this markup.
+    partnerLabel: $('partnerLabel'), partnerFigures: $('partnerFigures'), partnerBody: $('partnerBody'),
+    btnShare: $('btnShare'), btnPartner: $('btnPartner'), btnPartnerClear: $('btnPartnerClear')
   };
 
   // If the core markup is not there, do nothing rather than throw.
@@ -528,6 +567,7 @@
 
   var hits = loadHits();
   var storageFailed = false;
+  var partner = loadPartner();
 
   // ---- Notes: one line above the thumb controls ----
   var noteTimer = null, noteTag = null, noteAction = null;
@@ -814,6 +854,8 @@
     el.history.appendChild(frag);
     if (el.historyNote) el.historyNote.hidden = !anyBaseline;
 
+    renderPartner(now);
+
     // Undo only reaches back one hour, and says which hit it would remove.
     var idx = newestIndex();
     var undoable = false, undoAt = 0;
@@ -910,6 +952,210 @@
       done(legacyCopy(text));
     }
   }
+  // ---- Sharing: a code holding one figure per day, carried by the two of you ----
+  // Format: TPR1~name~YYYYMMDD~d0.d1.d2...~epochSeconds
+  // Each day is "" for nothing, "62" for hits with no breach, "62-3" for hits and hours over.
+  // Timestamps never leave the phone; only daily totals do.
+  function readLocal(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
+  function writeLocal(key, val) { try { localStorage.setItem(key, val); return true; } catch (e) { return false; } }
+
+  function sanitizeName(s) {
+    return String(s == null ? '' : s)
+      .replace(/[^A-Za-z0-9 ]/g, '')
+      .replace(/\s+/g, ' ')
+      .replace(/^ +| +$/g, '')
+      .slice(0, 14);
+  }
+  function myName() { return sanitizeName(readLocal(NAME_KEY)); }
+
+  function buildShareCode(now) {
+    var buckets = bucketHits(hits);
+    var start = addDays(now, -(SHARE_DAYS - 1));
+    var parts = [];
+    for (var i = 0; i < SHARE_DAYS; i++) {
+      var st = dayStats(buckets, addDays(start, i));
+      if (!st.total && !st.over) parts.push('');
+      else if (!st.over) parts.push(String(st.total));
+      else parts.push(st.total + '-' + st.over);
+    }
+    var ymd = start.getFullYear() + pad(start.getMonth() + 1) + pad(start.getDate());
+    return 'TPR1~' + (myName() || 'Partner') + '~' + ymd + '~' + parts.join('.') +
+      '~' + Math.floor(now.getTime() / 1000);
+  }
+
+  function parseShareCode(text) {
+    var m = String(text == null ? '' : text).match(/TPR1~[^~]{0,20}~\d{8}~[0-9.\-]*~\d{1,12}/);
+    if (!m) return null;
+    var f = m[0].split('~');
+    var ymd = f[2];
+    var y = +ymd.slice(0, 4), mo = +ymd.slice(4, 6), d = +ymd.slice(6, 8);
+    if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+    var start = new Date(y, mo - 1, d);
+    if (isNaN(start.getTime()) || start.getMonth() !== mo - 1) return null;
+    var at = +f[4] * 1000;
+    if (!isFinite(at) || at <= 0) return null;
+    var cells = f[3] === '' ? [] : f[3].split('.');
+    if (!cells.length || cells.length > 400) return null;
+    var days = [];
+    for (var i = 0; i < cells.length; i++) {
+      var total = 0, over = 0;
+      if (cells[i]) {
+        var pcs = cells[i].split('-');
+        total = parseInt(pcs[0], 10);
+        over = pcs.length > 1 ? parseInt(pcs[1], 10) : 0;
+        if (!isFinite(total) || total < 0) total = 0;
+        if (!isFinite(over) || over < 0) over = 0;
+        // a day holds 24 hours, and a breached hour needs hits in it
+        if (over > 24) over = 24;
+        if (over > total) over = total;
+      }
+      days.push({ key: dayKey(addDays(start, i)), total: total, over: over });
+    }
+    return { name: sanitizeName(f[1]) || 'Partner', at: at, days: days };
+  }
+
+  function loadPartner() {
+    var raw = readLocal(PARTNER_KEY);
+    if (!raw) return null;
+    try {
+      var o = JSON.parse(raw);
+      if (!o || !o.days || !o.days.length || !o.at) return null;
+      o.name = sanitizeName(o.name) || 'Partner';
+      return o;
+    } catch (e) { return null; }
+  }
+
+  function ago(ms) {
+    if (ms < 0) ms = 0;
+    var mins = Math.round(ms / 60000);
+    if (mins < 2) return 'just now';
+    if (mins < 60) return mins + ' min ago';
+    var hrs = Math.round(mins / 60);
+    if (hrs < 36) return hrs + 'h ago';
+    return plural(Math.round(hrs / 24), 'day ago', 'days ago');
+  }
+
+  function copyText(text, done) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(legacyCopy(text)); });
+    } else {
+      done(legacyCopy(text));
+    }
+  }
+
+  function shareProgress() {
+    var name = myName();
+    if (!name) {
+      var typed;
+      try { typed = window.prompt('What name should they see?', ''); }
+      catch (e) { note('Sharing needs a text dialog.', { warn: true, ms: 4000 }); return; }
+      if (typed === null || typed === undefined) return;
+      name = sanitizeName(typed) || 'Partner';
+      writeLocal(NAME_KEY, name);
+    }
+    var now = new Date();
+    var today = dayStats(bucketHits(hits), now);
+    var line = 'Taper · ' + name + ' · ' + fmtDate(now) + ': ' + plural(today.total, 'hit', 'hits');
+    if (today.cap !== null) line += ', ' + plural(today.over, 'hour', 'hours') + ' over cap';
+    var text = line + '.\n' + buildShareCode(now);
+    copyText(text, function (ok) {
+      if (ok) { flashLabel(el.btnShare, 'Copied · send it'); return; }
+      var shown = false;
+      try { window.prompt('Copy this and send it:', text); shown = true; } catch (e) { shown = false; }
+      if (!shown) flashLabel(el.btnShare, 'Copy failed');
+    });
+  }
+
+  function pastePartner() {
+    var raw;
+    try { raw = window.prompt('Paste the code they sent you:'); }
+    catch (e) { note('Adding a partner needs a paste dialog.', { warn: true, ms: 4000 }); return; }
+    if (raw === null || raw === undefined) return;
+    if (!String(raw).replace(/^\s+|\s+$/g, '')) return;
+    var parsed = parseShareCode(raw);
+    if (!parsed) {
+      note('That is not a Taper code. Ask them to tap Share my progress.', { warn: true, ms: 4500 });
+      return;
+    }
+    if (!writeLocal(PARTNER_KEY, JSON.stringify(parsed))) {
+      note('Not saved. Storage is full or blocked.', { warn: true });
+      return;
+    }
+    partner = parsed;
+    render();
+    note('Updated ' + parsed.name, { ms: 2500 });
+  }
+
+  function removePartner() {
+    if (!partner) return;
+    var ok = false;
+    try { ok = window.confirm('Remove ' + partner.name + '? Your own hits are not touched.'); }
+    catch (e) { ok = true; }
+    if (!ok) return;
+    try { localStorage.removeItem(PARTNER_KEY); } catch (e) { /* nothing to do */ }
+    partner = null;
+    render();
+  }
+
+  // Read-only. Partner figures are never merged into your own hits.
+  function renderPartner(now) {
+    if (!el.partnerBody || !el.partnerLabel || !el.partnerFigures) return;
+    if (el.btnPartnerClear) el.btnPartnerClear.hidden = !partner;
+    if (el.btnPartner) el.btnPartner.textContent = partner ? 'Paste their update' : 'Paste their code';
+    el.partnerBody.textContent = '';
+
+    if (!partner) {
+      el.partnerLabel.textContent = 'Partner';
+      el.partnerFigures.textContent = '';
+      var p = document.createElement('p');
+      p.className = 'partner-empty';
+      p.textContent = 'Tap Share my progress and send them the code. Paste theirs here to follow how they are doing.';
+      el.partnerBody.appendChild(p);
+      return;
+    }
+
+    el.partnerLabel.textContent = partner.name;
+    var rows = partner.days.slice(-PARTNER_ROWS).reverse();
+    var latest = rows[0];
+    var age = now.getTime() - partner.at;
+    var figures = plural(latest.total, 'hit', 'hits') + ' · ' + latest.over + ' h over · ';
+    el.partnerFigures.textContent = figures;
+    var when = document.createElement('span');
+    when.className = 'partner-when' + (age > STALE_MS ? ' stale' : '');
+    when.textContent = ago(age);
+    el.partnerFigures.appendChild(when);
+
+    var max = 1, i;
+    for (i = 0; i < rows.length; i++) if (rows[i].total > max) max = rows[i].total;
+
+    var list = document.createElement('ol');
+    list.className = 'pdays';
+    for (i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      var li = document.createElement('li');
+      var dow = document.createElement('span');
+      dow.className = 'dow';
+      dow.textContent = fmtDow(parseLocalDate(r.key), now);
+      var track = document.createElement('div');
+      track.className = 'ptrack';
+      if (r.total > 0) {
+        var fill = document.createElement('span');
+        fill.className = 'pfill' + (r.over > 0 ? ' breach' : '');
+        fill.style.width = Math.max(2, Math.round(100 * r.total / max)) + '%';
+        track.appendChild(fill);
+      }
+      var n = document.createElement('span');
+      n.className = 'n';
+      n.textContent = String(r.total);
+      var over = document.createElement('span');
+      over.className = 'over' + (r.over > 0 ? ' bad' : '');
+      over.textContent = String(r.over);
+      li.appendChild(dow); li.appendChild(track); li.appendChild(n); li.appendChild(over);
+      list.appendChild(li);
+    }
+    el.partnerBody.appendChild(list);
+  }
+
   function importHits() {
     var raw;
     try {
@@ -1018,6 +1264,9 @@
   el.btnExport.addEventListener('click', exportHits);
   el.btnReset.addEventListener('click', resetHits);
   if (el.btnImport) el.btnImport.addEventListener('click', importHits);
+  if (el.btnShare) el.btnShare.addEventListener('click', shareProgress);
+  if (el.btnPartner) el.btnPartner.addEventListener('click', pastePartner);
+  if (el.btnPartnerClear) el.btnPartnerClear.addEventListener('click', removePartner);
 
   if (el.backdate) {
     el.backdate.addEventListener('click', function (e) {
